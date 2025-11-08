@@ -5,7 +5,6 @@ import streamlit_authenticator as stauth
 import yaml
 
 def login():
-    # load your config as you already do
     with open("config.yaml", "r") as f:
         config = yaml.safe_load(f)
 
@@ -16,21 +15,19 @@ def login():
         config["cookie"]["expiry_days"],
     )
 
-    # Standard login form
+    # Render username/password form
     authenticator.login(location="main")
 
-    # --- Guest access UI ---
     st.markdown("### Or")
     if st.button("🚪 Continue as Guest"):
-        # create a unique guest username so each visitor gets isolated storage
         guest_id = f"guest-{uuid.uuid4().hex[:6]}"
         st.session_state["authentication_status"] = True
         st.session_state["username"] = guest_id
         st.session_state["name"] = "Guest"
         st.session_state["is_guest"] = True
-        st.experimental_rerun()
+        st.rerun()  # <-- use modern API
 
-    # Read results from session_state (new authenticator API)
+    # Read results from session_state (per streamlit-authenticator >=0.3)
     name = st.session_state.get("name")
     auth_status = st.session_state.get("authentication_status")
     username = st.session_state.get("username")
