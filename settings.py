@@ -4,6 +4,8 @@ import os
 import streamlit as st
 from user_data import path_in_user_dir
 from ledger import load_accounts
+import shutil
+from user_data import user_dir
 
 PREFS_JSON = path_in_user_dir("prefs.json")
 
@@ -139,3 +141,35 @@ def settings():
     if st.button("Save settings"):
         _save_prefs(prefs)
         st.success("Settings saved.")
+
+    st.divider()
+    st.subheader("Danger Zone 🧨")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Clear MY data (current user)"):
+            try:
+                udir = user_dir()
+                shutil.rmtree(udir, ignore_errors=True)
+                os.makedirs(udir, exist_ok=True)
+                # optional: recreate empty CSVs by reusing your bootstrap
+                from project import bootstrap_files
+                bootstrap_files()
+                st.cache_data.clear()
+                st.success("Your data folder was cleared. Reloading…")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Could not clear your data: {e}")
+
+    with col2:
+        # Optional: only show to an admin user
+        if st.session_state.get("username") in {"admin", "ahmed"}:
+            if st.button("⚠️ Clear ALL users’ data (irreversible)"):
+                try:
+                    shutil.rmtree("data", ignore_errors=True)
+                    os.makedirs("data", exist_ok=True)
+                    st.cache_data.clear()
+                    st.success("All data cleared. Reloading…")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Could not clear all data: {e}")
