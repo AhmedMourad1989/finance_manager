@@ -1,0 +1,6 @@
+streamlit>=1.36
+pandas>=2.2
+python-dateutil>=2.9
+PyYAML>=6.0
+streamlit-authenticator>=0.3
+altair>=5.3

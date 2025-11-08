@@ -1,0 +1,4 @@
+﻿id,account_name,account_type,account_id,balance,currency,limit,apr,note
+1,HSBC,Current,1,7071.0,GBP,0.0,0.0,Main
+2,Monzo,Current,2,100.0,GBP,0.0,0.0,
+3,Barclaycard,Credit Card,3,2150.0,GBP,3500.0,30.0,

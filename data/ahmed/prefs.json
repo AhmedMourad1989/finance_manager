@@ -1,0 +1,14 @@
+{
+  "display_name": "",
+  "base_currency": "GBP",
+  "dashboard_months_back": 6,
+  "include_future_tx": false,
+  "default_income_account": "",
+  "default_expense_account": "",
+  "week_starts_on": "Mon",
+  "number_format": "1,234.56",
+  "theme": "auto",
+  "recurring_autorun": true,
+  "cc_statement_day": 25,
+  "min_payment_rule": "max(25, 3%)"
+}

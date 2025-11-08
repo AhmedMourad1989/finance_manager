@@ -1,0 +1,10 @@
+credentials:
+  usernames:
+    ahmed:
+      email: "ahmed@email.com"
+      name: "Ahmed"
+      password: "1234"   # hashed later
+cookie:
+  expiry_days: 1
+  name: "auth_cookie"
+  key: "something_random"
