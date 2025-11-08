@@ -94,6 +94,16 @@ def main():
     st.session_state["username"] = username
     st.session_state["full_name"] = name
 
+    is_guest = bool(st.session_state.get("is_guest"))
+
+    st.sidebar.title("Finance Manager 💼")
+    with st.sidebar:
+        who = st.session_state.get('full_name') or st.session_state.get('username')
+        st.write(f"👋 {who}")
+        if is_guest:
+            st.caption("You are in **Guest Mode**. Your data is stored in a temporary guest folder.")
+        authenticator.logout(location="sidebar", key="logout_button")
+
 
     import datetime
 
