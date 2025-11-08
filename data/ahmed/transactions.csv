@@ -1,8 +1,0 @@
-﻿id,date,kind,amount,currency,account_id,counterparty_account_id,category,ref_table,ref_id,note
-1,2025-11-28,income,5121.0,GBP,1,,Salary,manual_income,,
-2,2025-11-08,transfer,75.0,GBP,1,3.0,transfer_out,,,
-3,2025-11-08,transfer,75.0,GBP,3,1.0,transfer_in,,,
-4,2025-11-08,transfer,75.0,GBP,1,3.0,transfer_out,,,
-5,2025-11-08,transfer,75.0,GBP,3,1.0,transfer_in,,,
-6,2025-11-08,transfer,200.0,GBP,1,3.0,transfer_out,,,
-7,2025-11-08,transfer,200.0,GBP,3,1,transfer_in,,,
