@@ -1,9 +1,9 @@
 credentials:
   usernames:
     ahmed:
-      email: "ahmed@email.com"
+      email: "ahmssmourad@gmail.com"
       name: "Ahmed"
-      password: "1234"   # hashed later
+      password: "$2b$12$QoUvJRebh4efN9lZ2b5eNOSbWMX7JcCwcu6aTSxP0pINyxpOuHv56"   # hashed later
 cookie:
   expiry_days: 1
   name: "auth_cookie"
