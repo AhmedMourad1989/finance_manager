@@ -1,10 +1,11 @@
+# project.py
 import csv
 import os
 from datetime import date
 import streamlit as st
-from auth import login
-from user_data import user_id, user_dir, path_in_user_dir
 
+from auth import login
+from user_data import user_dir, path_in_user_dir
 
 # ---------- page config ----------
 st.set_page_config(
@@ -16,18 +17,16 @@ st.set_page_config(
 # ---------- small utilities ----------
 def home():
     st.title("Welcome to Finance Manager 💼")
-    st.divider()
     st.header("Get Started 🚀")
     st.caption("Use the sidebar to navigate through the application.")
     st.info("💡 Tip: Start by adding your bank accounts, income and fixed bills first.")
-    st.divider()
     st.markdown(":blue[Developed by Ahmed Mourad © 2025]")
 
-def ensure_data_dir():
-    # FIX: don't precreate guest paths; just the base
+def ensure_data_root():
+    # Only ensure the top-level data dir; per-user is created after login
     os.makedirs("data", exist_ok=True)
 
-def csv_not_exists_create(path, headers):
+def csv_not_exists_create(path: str, headers: list[str]):
     """Create CSV with headers if missing or 0-byte."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     if not os.path.exists(path) or os.path.getsize(path) == 0:
@@ -37,36 +36,62 @@ def csv_not_exists_create(path, headers):
 
 # ---------- app bootstrap ----------
 def bootstrap_files():
-    ensure_data_dir()
-    os.makedirs(user_dir(), exist_ok=True)  # ensure per-user dir
+    """
+    Create per-user data files with stable headers (only after login).
+    """
+    ensure_data_root()
+    os.makedirs(user_dir(), exist_ok=True)  # per-user dir
 
-    csv_not_exists_create(path_in_user_dir("accounts.csv"),
-        ["id","account_name","account_type","account_id","balance","currency","limit","apr","note"])
+    # Accounts
+    csv_not_exists_create(
+        path_in_user_dir("accounts.csv"),
+        ["id","account_name","account_type","account_id","balance","currency","limit","apr","note"]
+    )
 
-    # FIX: add 'category' column
-    csv_not_exists_create(path_in_user_dir("transactions.csv"),
-        ["id","date","kind","amount","currency","account_id","category","note"])
+    # Transactions — canonical header to match ledger.TX_COLUMNS
+    csv_not_exists_create(
+        path_in_user_dir("transactions.csv"),
+        ["id","date","kind","amount","currency","account_id",
+         "counterparty_account_id","category","ref_table","ref_id","note"]
+    )
 
-    csv_not_exists_create(path_in_user_dir("recurring_expenses.csv"),
-        ["id","expense_type","amount","currency","frequency","next_due_date","account_id","note"])
+    # Recurring
+    csv_not_exists_create(
+        path_in_user_dir("recurring_expenses.csv"),
+        ["id","expense_type","amount","currency","frequency","next_due_date","account_id","note"]
+    )
+    csv_not_exists_create(
+        path_in_user_dir("recurring_incomes.csv"),
+        ["id","income_type","amount","currency","frequency","next_due_date","account_id","note"]
+    )
 
-    csv_not_exists_create(path_in_user_dir("recurring_incomes.csv"),
-        ["id","income_type","amount","currency","frequency","next_due_date","account_id","note"])
+    # Debts
+    csv_not_exists_create(
+        path_in_user_dir("debts.csv"),
+        ["id","lender","debt_type","account_id","original_amount","current_balance",
+         "currency","apr","min_payment","payment_day","note"]
+    )
 
-    csv_not_exists_create(path_in_user_dir("debts.csv"),
-        ["id","lender","debt_type","account_id","original_amount","current_balance","currency","apr","min_payment","payment_day","note"])
+    # Credit card statements
+    csv_not_exists_create(
+        path_in_user_dir("credit_card_statements.csv"),
+        ["id","card_account_id","period_start","period_end","statement_balance","apr_at_cycle",
+         "min_due","due_date","paid_amount","paid_date","carried_balance","note"]
+    )
 
-    csv_not_exists_create(path_in_user_dir("credit_card_statements.csv"),
-        ["id","card_account_id","period_start","period_end","statement_balance","apr_at_cycle","min_due","due_date","paid_amount","paid_date","carried_balance","note"])
-
-    csv_not_exists_create(path_in_user_dir("categories.csv"),
-        ["id","kind","name","active"])
-
-    csv_not_exists_create(path_in_user_dir("rules.csv"),
-        ["id","active","priority","kind","category","match_field","contains","case_sensitive"])
-
-    csv_not_exists_create(path_in_user_dir("budgets.csv"),
-        ["id","month","category","amount","currency","active","note"])
+    # Categories / Rules / Budgets
+    csv_not_exists_create(
+        path_in_user_dir("categories.csv"),
+        ["id","kind","name","active"]
+    )
+    csv_not_exists_create(
+        path_in_user_dir("rules.csv"),
+        ["id","active","priority","kind","category","match_field","contains","case_sensitive"]
+    )
+    csv_not_exists_create(
+        path_in_user_dir("budgets.csv"),
+        ["id","month","category","amount","currency","active","note"]
+    )
 
 def run_processors_safely():
     """Run recurring processors without breaking the UI."""
@@ -81,49 +106,44 @@ def run_processors_safely():
 
 # ---------- main ----------
 def main():
-    # --- Login first (FIX: avoid creating guest files) ---
+    # --- Login first (avoid creating guest or wrong-user files before auth) ---
     authenticator, name, auth_status, username = login()
+
     if auth_status is False:
         st.error("Invalid username or password.")
         return
-    elif auth_status is None:
+    if auth_status is None:
         st.info("Please log in.")
         return
 
-    # store in session for path helpers
+    # Store in session for helpers that rely on username/full_name
     st.session_state["username"] = username
     st.session_state["full_name"] = name
-
     is_guest = bool(st.session_state.get("is_guest"))
 
-    st.sidebar.title("Finance Manager 💼")
-    with st.sidebar:
-        who = st.session_state.get('full_name') or st.session_state.get('username')
-        st.write(f"👋 {who}")
-        if is_guest:
-            st.caption("You are in **Guest Mode**. Your data is stored in a temporary guest folder.")
-        authenticator.logout(location="sidebar", key="logout_button")
-
-
-    import datetime
-
-    today = datetime.date.today()
-    st.markdown(f"**{st.session_state.get('name','')}** — {today:%A %d %B %Y}")
-    st.write("")
-
-    # now we can safely create per-user files and run processors
+    # Create per-user files and run processors AFTER we know the user
     bootstrap_files()
     run_processors_safely()
-
-    if "page" not in st.session_state:
-        st.session_state.page = "Welcome"
 
     # -------- sidebar --------
     st.sidebar.title("Finance Manager 💼")
     with st.sidebar:
-        st.write(f"👋 {st.session_state.get('full_name', st.session_state['username'])}")
-        authenticator.logout(location="sidebar", key="logout_button")
+        who = st.session_state.get("full_name") or st.session_state.get("username", "User")
+        st.write(f"👋 {who}")
+        if is_guest:
+            st.caption("Guest Mode — data is stored in a temporary guest area.")
 
+        # IMPORTANT: unique key, call exactly once
+        try:
+            authenticator.logout("Log out", location="sidebar", key="auth_logout_btn")
+        except TypeError:
+            # Older streamlit-authenticator fallback
+            authenticator.logout("Log out", "sidebar")
+
+    # Small top line with today's date
+    st.caption(f"{date.today():%A, %d %B %Y}")
+
+    # -------- navigation --------
     page = st.sidebar.radio(
         "Navigate",
         [
@@ -146,7 +166,7 @@ def main():
         key="nav",
     )
 
-    # -------- lazy imports per selection --------
+    # -------- route to pages (lazy import) --------
     if page == "🏠 Home":
         home()
     elif page == "📊 Dashboard":
